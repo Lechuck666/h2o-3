@@ -1084,15 +1084,15 @@ public abstract class GLMTask  {
 
     @Override public void postGlobal(){
       ArrayUtils.mult(_gradient, _reg);
-      int P = _beta.length;
+      int P = _beta.length; // number of predictors
       // add l2 penalty
       if (_currentLambda > 0) {
         for (int c = 0; c < P - 1; ++c)
-          for (int j = 0; j < _beta[0].length; ++j)
+          for (int j = 0; j < _beta[0].length; ++j) // iterate over each class
             _gradient[c][j] += _currentLambda * _beta[c][j];
       }
       if ((_penaltyMat!=null) && (_gamBetaIndices!=null)) 
-        updateGradGamMultinomial(_gradient, _penaltyMat, _gamBetaIndices, _beta);
+        updateGradGamMultinomial(_gradient, _penaltyMat, _gamBetaIndices, _beta); // beta is coeff index by class
     }
 
     public double [] gradient(){
@@ -1501,8 +1501,6 @@ public abstract class GLMTask  {
     double [] _xy; // wx^t%*%z,
     double _yy;
     final double [] _ymu;
-    double[][][] _penaltyMat;
-
     long _nobs;
     public double _likelihood;
     private transient GLMWeights _w;

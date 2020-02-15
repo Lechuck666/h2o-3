@@ -43,12 +43,24 @@ public class GLMUtils {
       }
     }
   }
-  
+
   public static void updateGradGamMultinomial(double[][] gradient, double[][][] penaltyMat, int[][] gamBetaIndices,
                                               double[][] beta) {
-    int numClass = beta.length;
+    int numClass = beta[0].length;
+    int numGamCol = gamBetaIndices.length;
     for (int classInd = 0; classInd < numClass; classInd++) {
-      updateGradGam(gradient[classInd], penaltyMat, gamBetaIndices, beta[classInd]);
+      for (int gamInd = 0; gamInd < numGamCol; gamInd++) {
+        int numKnots = gamBetaIndices[gamInd].length;
+        for (int rowInd = 0; rowInd < numKnots; rowInd++) {
+          int betaIndR = gamBetaIndices[gamInd][rowInd];
+          double temp = 0.0;
+          for (int colInd = 0; colInd < numKnots; colInd++) {
+            int betaIndC = gamBetaIndices[gamInd][colInd];
+            temp += penaltyMat[gamInd][rowInd][colInd]*beta[betaIndR][classInd]*beta[betaIndC][classInd];
+          }
+          gradient[betaIndR][classInd] += temp;
+        }
+      }
     }
   }
 
@@ -62,6 +74,13 @@ public class GLMUtils {
     return smoothval;
   }
 
+  /**
+   * 
+   * @param beta multinomial number of class by number of predictors
+   * @param penaltyMatrix
+   * @param gamColIndices
+   * @return
+   */
   public static double calSmoothNess(double[][] beta, double[][][] penaltyMatrix, int[][] gamColIndices) {
     int numClass = beta.length;
     double smoothval=0;

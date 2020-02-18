@@ -301,7 +301,7 @@ final public class DeepWaterModelInfo extends Iced {
         is.read(_network);
         is.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
       } finally {
         if (file != null)
           _backend.deleteSavedModel(file.toString());
@@ -313,7 +313,7 @@ final public class DeepWaterModelInfo extends Iced {
       _backend.saveParam(getModel().get(), file.toString());
       _modelparams = _backend.readBytes(file);
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     } finally {
       if (file !=null)
         _backend.deleteSavedParam(file.toString());

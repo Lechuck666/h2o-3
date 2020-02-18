@@ -11,6 +11,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +19,7 @@ import java.util.Arrays;
 
 class DeepWaterImageIterator extends DeepWaterIterator {
 
-  DeepWaterImageIterator(ArrayList<String> images, ArrayList<Float> labels, float[] meanData, int batch_size, int width, int height, int channels, boolean cache) throws IOException {
+  DeepWaterImageIterator(ArrayList<String> images, ArrayList<Float> labels, float[] meanData, int batch_size, int width, int height, int channels, boolean cache) {
     super(batch_size, width*height*channels, cache);
     _img_lst = images;
     _label_lst = labels;
@@ -108,16 +109,16 @@ class DeepWaterImageIterator extends DeepWaterIterator {
           }
         }
       } catch (NullPointerException e) {
-        e.printStackTrace();
         // ignored: ImageIO's ICC_Profile can fail with NPEs - unclear why
-      } catch (Throwable e) {
-        Log.warn(e.getMessage());
+        Log.err(e);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
       tryComplete();
     }
   }
 
-  public boolean Next(Futures fs) throws IOException {
+  public boolean Next(Futures fs) {
     if (_start_index < _num_obs) {
       if (_start_index + _batch_size > _num_obs)
         _start_index = _num_obs - _batch_size;

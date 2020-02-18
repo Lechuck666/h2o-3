@@ -15,7 +15,7 @@ import java.util.Arrays;
 
 class DeepWaterDatasetIterator extends DeepWaterIterator {
 
-  DeepWaterDatasetIterator(ArrayList<Integer> rows, ArrayList<Float> labels, DataInfo dinfo, int batch_size, boolean cache) throws IOException {
+  DeepWaterDatasetIterator(ArrayList<Integer> rows, ArrayList<Float> labels, DataInfo dinfo, int batch_size, boolean cache) {
     super(batch_size, dinfo.fullN(), cache);
     _rows_lst = rows;
     _label_lst = labels;
@@ -89,7 +89,7 @@ class DeepWaterDatasetIterator extends DeepWaterIterator {
     }
   }
 
-  public boolean Next(Futures fs) throws IOException {
+  public boolean Next(Futures fs) {
     if (_start_index < _rows_lst.size()) {
       if (_start_index + _batch_size > _rows_lst.size())
         _start_index = _rows_lst.size() - _batch_size;

@@ -820,8 +820,8 @@ final public class H2O {
         output.write(':');
         output.write(Integer.toString(API_PORT));
         output.flush();
-      } catch ( IOException e ) {
-        e.printStackTrace();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
     if (embeddedH2OConfig == null) { return; }

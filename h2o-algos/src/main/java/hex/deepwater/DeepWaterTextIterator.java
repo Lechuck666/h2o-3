@@ -41,7 +41,7 @@ class DeepWaterTextIterator extends DeepWaterIterator {
     return dict;
   }
 
-  DeepWaterTextIterator(ArrayList<String> txt_lst, ArrayList<Float> label_lst, int batch_size, int dictLen, boolean cache) throws IOException {
+  DeepWaterTextIterator(ArrayList<String> txt_lst, ArrayList<Float> label_lst, int batch_size, int dictLen, boolean cache) {
     super(batch_size, dictLen, cache);
     _wordsPerLine = dictLen;
     _start_index = 0;
@@ -108,7 +108,7 @@ class DeepWaterTextIterator extends DeepWaterIterator {
     }
   }
 
-  public boolean Next(Futures fs) throws IOException {
+  public boolean Next(Futures fs) {
     if (_start_index < _num_obs) {
       if (_start_index + _batch_size > _num_obs)
         _start_index = _num_obs - _batch_size;

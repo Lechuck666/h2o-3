@@ -10,6 +10,7 @@ import water.fvec.Frame;
 import water.util.Log;
 import water.util.UnsafeUtils;
 
+import javax.management.RuntimeErrorException;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -81,7 +82,7 @@ abstract class ZipUtil {
         return isDir;
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
 
     return false;
@@ -106,7 +107,7 @@ abstract class ZipUtil {
         }
         zipFile.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
       }
     }
     return fileList;
@@ -140,7 +141,7 @@ abstract class ZipUtil {
         }
         zipFile.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
       }
     }
 
@@ -180,7 +181,7 @@ abstract class ZipUtil {
           return bits.length / zips.length;
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        throw new RuntimeException(e);
       }
     } else {
       byte[] bits = ZipUtil.unzipBytes(zips, cpr, FileVec.DFLT_CHUNK_SIZE);
@@ -268,14 +269,15 @@ abstract class ZipUtil {
         }
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
+    } finally {
+      try {
+        is.close();
+      } catch (IOException e) {
+        Log.err(e);
+      }
     }
 
-    try {
-      is.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
 
     return bs;
   }

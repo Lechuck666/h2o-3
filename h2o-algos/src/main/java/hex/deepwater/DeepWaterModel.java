@@ -746,8 +746,6 @@ public class DeepWaterModel extends Model<DeepWaterModel,DeepWaterParameters,Dee
         for (Vec.Writer aVw : vw) aVw.close(fs);
         fs.blockForPending();
       }
-    } catch (IOException e) {
-      e.printStackTrace();
     } finally {
       if (makeNative) model_info().nukeBackend();
       return _predFrame;
@@ -829,101 +827,97 @@ public class DeepWaterModel extends Model<DeepWaterModel,DeepWaterParameters,Dee
       }
 
       DeepWaterIterator iter;
-      try {
-        Vec.Writer[] vw = new Vec.Writer[cols];
-        if (_makePreds) {
-          // prep predictions vec for writing
-          for (int i = 0; i < vw.length; ++i)
-            vw[i] = _predFrame.vec(i).open();
-        }
+      Vec.Writer[] vw = new Vec.Writer[cols];
+      if (_makePreds) {
+        // prep predictions vec for writing
+        for (int i = 0; i < vw.length; ++i)
+          vw[i] = _predFrame.vec(i).open();
+      }
 
-        long row=0;
-        int skippedIdx=0;
-        int skippedRow=skipped.isEmpty()?-1:skipped.get(skippedIdx);
-        double mul = 1;
-        double sub = 0;
-        if (_output._normRespMul!=null && _output._normRespSub!=null) {
-          mul = _output._normRespMul[0];
-          sub = _output._normRespSub[0];
-        }
-        if (model_info().get_params()._problem_type == DeepWaterParameters.ProblemType.image) {
-          int width = model_info()._width;
-          int height = model_info()._height;
-          int channels = model_info()._channels;
-          iter = new DeepWaterImageIterator(score_data, null /*no labels*/, model_info()._meanData, batch_size, width, height, channels, model_info().get_params()._cache_data);
-        } else if (model_info().get_params()._problem_type == DeepWaterParameters.ProblemType.dataset) {
-          iter = new DeepWaterDatasetIterator(score_data, null /*no labels*/, di, batch_size, model_info().get_params()._cache_data);
-        } else if (model_info().get_params()._problem_type == DeepWaterParameters.ProblemType.text) {
-          iter = new DeepWaterTextIterator(score_data, null /*no labels*/, batch_size, 56 /*FIXME*/, model_info().get_params()._cache_data);
-        } else {
-          throw H2O.unimpl();
-        }
-        Futures fs=new Futures();
-        while(iter.Next(fs)) {
-          if (isCancelled() || _j != null && _j.stop_requested()) return;
-          float[] data = iter.getData();
-          float[] predFloats = model_info().predict(data);
+      long row=0;
+      int skippedIdx=0;
+      int skippedRow=skipped.isEmpty()?-1:skipped.get(skippedIdx);
+      double mul = 1;
+      double sub = 0;
+      if (_output._normRespMul!=null && _output._normRespSub!=null) {
+        mul = _output._normRespMul[0];
+        sub = _output._normRespSub[0];
+      }
+      if (model_info().get_params()._problem_type == DeepWaterParameters.ProblemType.image) {
+        int width = model_info()._width;
+        int height = model_info()._height;
+        int channels = model_info()._channels;
+        iter = new DeepWaterImageIterator(score_data, null /*no labels*/, model_info()._meanData, batch_size, width, height, channels, model_info().get_params()._cache_data);
+      } else if (model_info().get_params()._problem_type == DeepWaterParameters.ProblemType.dataset) {
+        iter = new DeepWaterDatasetIterator(score_data, null /*no labels*/, di, batch_size, model_info().get_params()._cache_data);
+      } else if (model_info().get_params()._problem_type == DeepWaterParameters.ProblemType.text) {
+        iter = new DeepWaterTextIterator(score_data, null /*no labels*/, batch_size, 56 /*FIXME*/, model_info().get_params()._cache_data);
+      } else {
+        throw H2O.unimpl();
+      }
+      Futures fs=new Futures();
+      while(iter.Next(fs)) {
+        if (isCancelled() || _j != null && _j.stop_requested()) return;
+        float[] data = iter.getData();
+        float[] predFloats = model_info().predict(data);
 //          System.err.println("preds: " + Arrays.toString(predFloats));
 //          Log.info("Scoring on " + batch_size + " samples (rows " + row + " and up): " + Arrays.toString(((DeepWaterImageIterator)iter).getFiles()));
 
-            // fill the pre-created output Frame
-          boolean unstable = false;
-          for (int j = 0; j < batch_size; ++j) {
-            while (row==skippedRow) {
-              assert(weightIdx == -1 ||_fr.vec(weightIdx).at(row)==0);
-              if (skipped.size()>skippedIdx+1) {
-                skippedRow = skipped.get(++skippedIdx);
-              }
-              row++;
-            }
-            if (row >= _fr.numRows()) break;
-            float [] actual = null;
-            if (_computeMetrics)
-              actual = new float[]{(float)_fr.vec(respIdx).at(row)};
-            if(_output.isClassifier()) {
-              double[] preds =new double[classes+1];
-              for (int i=0;i<classes;++i) {
-                int idx=j*classes+i; //[p0,...,p9,p0,...,p9, ... ,p0,...,p9]
-                preds[1+i] = predFloats[idx];
-                if (Double.isNaN(preds[1+i]))
-                  unstable = true;
-              }
-              if (_parms._balance_classes)
-                GenModel.correctProbabilities(preds, _output._priorClassDist, _output._modelClassDist);
-              preds[0] = hex.genmodel.GenModel.getPrediction(preds, _output._priorClassDist, null, defaultThreshold());
-              if (_makePreds) {
-                //Log.info(iter.getFiles()[j] + " -> preds: " + Arrays.toString(preds));
-                for (int i = 0; i <= classes; ++i)
-                  vw[i].set(row, preds[i]);
-              }
-              if (_computeMetrics)
-                _mb.perRow(preds, actual, DeepWaterModel.this);
-            }
-            else {
-              double pred = predFloats[j] * mul + sub;
-              if (Double.isNaN(pred))
-                unstable = true;
-              if (_makePreds)
-                vw[0].set(row, pred);
-              if (_computeMetrics)
-                _mb.perRow(new double[]{pred}, actual, DeepWaterModel.this);
+          // fill the pre-created output Frame
+        boolean unstable = false;
+        for (int j = 0; j < batch_size; ++j) {
+          while (row==skippedRow) {
+            assert(weightIdx == -1 ||_fr.vec(weightIdx).at(row)==0);
+            if (skipped.size()>skippedIdx+1) {
+              skippedRow = skipped.get(++skippedIdx);
             }
             row++;
           }
-          if (_makePreds) {
-            for (Vec.Writer aVw : vw) aVw.close(fs);
-            fs.blockForPending();
+          if (row >= _fr.numRows()) break;
+          float [] actual = null;
+          if (_computeMetrics)
+            actual = new float[]{(float)_fr.vec(respIdx).at(row)};
+          if(_output.isClassifier()) {
+            double[] preds =new double[classes+1];
+            for (int i=0;i<classes;++i) {
+              int idx=j*classes+i; //[p0,...,p9,p0,...,p9, ... ,p0,...,p9]
+              preds[1+i] = predFloats[idx];
+              if (Double.isNaN(preds[1+i]))
+                unstable = true;
+            }
+            if (_parms._balance_classes)
+              GenModel.correctProbabilities(preds, _output._priorClassDist, _output._modelClassDist);
+            preds[0] = hex.genmodel.GenModel.getPrediction(preds, _output._priorClassDist, null, defaultThreshold());
+            if (_makePreds) {
+              //Log.info(iter.getFiles()[j] + " -> preds: " + Arrays.toString(preds));
+              for (int i = 0; i <= classes; ++i)
+                vw[i].set(row, preds[i]);
+            }
+            if (_computeMetrics)
+              _mb.perRow(preds, actual, DeepWaterModel.this);
           }
-          if (unstable) {
-            model_info._unstable = true;
-            Log.err(unstable_msg);
-            throw new UnsupportedOperationException(unstable_msg);
+          else {
+            double pred = predFloats[j] * mul + sub;
+            if (Double.isNaN(pred))
+              unstable = true;
+            if (_makePreds)
+              vw[0].set(row, pred);
+            if (_computeMetrics)
+              _mb.perRow(new double[]{pred}, actual, DeepWaterModel.this);
           }
+          row++;
         }
-        if ( _j != null) _j.update(_fr.anyVec().nChunks());
-      } catch (IOException e) {
-        e.printStackTrace();
+        if (_makePreds) {
+          for (Vec.Writer aVw : vw) aVw.close(fs);
+          fs.blockForPending();
+        }
+        if (unstable) {
+          model_info._unstable = true;
+          Log.err(unstable_msg);
+          throw new UnsupportedOperationException(unstable_msg);
+        }
       }
+      if ( _j != null) _j.update(_fr.anyVec().nChunks());
     }
     DeepWaterBigScore(String[] domain, int ncols, double[] mean, boolean testHasWeights, boolean computeMetrics, boolean makePreds, Job j) {
       super(domain, ncols, mean, testHasWeights, computeMetrics, makePreds, j, CFuncRef.NOP);

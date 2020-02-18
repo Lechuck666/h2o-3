@@ -20,7 +20,9 @@ public class OSUtils {
      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
      Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang","type","OperatingSystem"), "TotalPhysicalMemorySize");
      return (Long) attribute;
-   } catch (Throwable e) { e.printStackTrace(); }
+   } catch (Exception e) {
+     throw new RuntimeException(e);
+   }
    return memory;
  }
 

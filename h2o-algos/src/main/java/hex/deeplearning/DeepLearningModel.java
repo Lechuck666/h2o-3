@@ -2087,7 +2087,7 @@ public class DeepLearningModel extends Model<DeepLearningModel,DeepLearningModel
                     throw new H2OIllegalArgumentException("Cannot change parameter: '" + fBefore.getName() + "': " + fBefore.get(oldP) + " -> " + fAfter.get(newP));
                   }
                 } catch (IllegalAccessException e) {
-                  e.printStackTrace();
+                  throw new RuntimeException(e);
                 }
               }
             }
@@ -2118,7 +2118,7 @@ public class DeepLearningModel extends Model<DeepLearningModel,DeepLearningModel
                       fTarget.set(tgtParms, fSource.get(srcParms));
                   }
                 } catch (IllegalAccessException e) {
-                  e.printStackTrace();
+                  throw new RuntimeException(e);
                 }
               }
             }

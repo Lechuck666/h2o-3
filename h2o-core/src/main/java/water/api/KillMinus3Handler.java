@@ -33,8 +33,7 @@ public class KillMinus3Handler extends Handler {
           } catch( java.io.IOException ioe ) {
             // Silently ignore if, e.g. /bin/kill does not exist on windows
           } catch (Exception xe) {
-            xe.printStackTrace();
-            throw new H2OIllegalArgumentException("");
+            throw new IllegalArgumentException(xe);
           }
         }
       }.doAllNodes();

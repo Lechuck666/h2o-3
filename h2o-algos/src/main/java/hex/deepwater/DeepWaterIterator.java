@@ -7,7 +7,7 @@ import java.io.IOException;
 
 abstract class DeepWaterIterator {
 
-  DeepWaterIterator(int batch_size, int obsSize, boolean cache) throws IOException {
+  DeepWaterIterator(int batch_size, int obsSize, boolean cache) {
     _batch_size = batch_size;
     _start_index = 0;
     _cache = cache;
@@ -19,7 +19,7 @@ abstract class DeepWaterIterator {
     _label[1] = new float[_batch_size];
   }
 
-  abstract public boolean Next(Futures fs) throws IOException;
+  abstract public boolean Next(Futures fs);
   public float[] getData() { return _data[_which ^ 1]; }
   public float[] getLabel() { return _label[_which ^ 1]; }
 

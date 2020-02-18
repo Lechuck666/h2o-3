@@ -541,7 +541,7 @@ public class DeepWaterParameters extends Model.Parameters {
                   throw new H2OIllegalArgumentException("Cannot change parameter: '" + fBefore.getName() + "': " + fBefore.get(oldP) + " -> " + fAfter.get(newP));
                 }
               } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
               }
             }
           }
@@ -572,7 +572,7 @@ public class DeepWaterParameters extends Model.Parameters {
                     fTarget.set(tgtParms, fSource.get(srcParms));
                 }
               } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
               }
             }
           }

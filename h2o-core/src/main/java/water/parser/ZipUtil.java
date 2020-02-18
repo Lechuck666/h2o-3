@@ -187,7 +187,6 @@ abstract class ZipUtil {
       byte[] bits = ZipUtil.unzipBytes(zips, cpr, FileVec.DFLT_CHUNK_SIZE);
       return bits.length / zips.length;
     }
-    return 1;
   }
 
 

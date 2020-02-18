@@ -15,15 +15,14 @@ public class OSUtils {
   * @return total size of machine physical memory in bytes or -1 if the attribute is not available.
   */
  public static long getTotalPhysicalMemory() {
-   long memory = -1;
    try {
      MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
      Object attribute = mBeanServer.getAttribute(new ObjectName("java.lang","type","OperatingSystem"), "TotalPhysicalMemorySize");
      return (Long) attribute;
    } catch (Exception e) {
-     throw new RuntimeException(e);
+     Log.err(e);
+     return -1;
    }
-   return memory;
  }
 
   public static Long getLongProperty(String name) {
